@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Category Catalog</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            font-size: 1.5rem;
+        }
+
+        #search-bar {
+            max-width: 800px;
+            margin: 1rem auto;
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #search {
+            width: 75%;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #filter {
+            width: 20%;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #categories {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 1.5rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            overflow-y: auto;
+            max-height: 600px;
+        }
+
+        .category {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .category:last-child {
+            border-bottom: none;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>Google Product Category Catalog</header>
+    
+    <!-- Панель пошуку і фільтрації -->
+    <div id="search-bar">
+        <input type="text" id="search" placeholder="Search categories..." />
+        <select id="filter">
+            <option value="all">Show All</option>
+            <option value="top-level">Top-Level Categories</option>
+            <option value="subcategories">Subcategories</option>
+        </select>
+    </div>
+
+    <!-- Каталог категорій -->
+    <div id="categories" class="loading">Loading categories...</div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const categoriesContainer = document.getElementById("categories");
+            const searchInput = document.getElementById("search");
+            const filterSelect = document.getElementById("filter");
+
+            let allCategories = [];
+
+            // URL до Google Product Taxonomy
+            const taxonomyUrl = "https://www.google.com/basepages/producttype/taxonomy.en-US.txt";
+
+            // Завантаження файлу
+            fetch(taxonomyUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to load the taxonomy file.");
+                    return response.text();
+                })
+                .then(data => {
+                    allCategories = data.split("\n").filter(line => line.trim() !== "");
+                    renderCategories(allCategories);
+                    categoriesContainer.classList.remove("loading");
+                })
+                .catch(error => {
+                    categoriesContainer.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                });
+
+            // Функція для відображення категорій
+            function renderCategories(categories) {
+                categoriesContainer.innerHTML = categories.map(category =>
+                    `<div class="category">${category}</div>`
+                ).join("");
+            }
+
+            // Пошук категорій
+            searchInput.addEventListener("input", () => {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filteredCategories = allCategories.filter(category =>
+                    category.toLowerCase().includes(searchTerm)
+                );
+                applyFilters(filteredCategories);
+            });
+
+            // Фільтрація категорій
+            filterSelect.addEventListener("change", () => {
+                applyFilters(allCategories);
+            });
+
+            function applyFilters(categories) {
+                const filterValue = filterSelect.value;
+
+                let filteredCategories = categories;
+
+                if (filterValue === "top-level") {
+                    filteredCategories = categories.filter(category => !category.includes(" > "));
+                } else if (filterValue === "subcategories") {
+                    filteredCategories = categories.filter(category => category.includes(" > "));
+                }
+
+                renderCategories(filteredCategories);
+            }
+        });
+    </script>
+</body>
+</html>
